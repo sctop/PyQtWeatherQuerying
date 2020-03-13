@@ -1,6 +1,10 @@
 {
   "Default": {
-    "city": "河源",
+    "city": "114.734954,23.769271",
     "latlon": "114.734954,23.769271"
+  },
+  "WeatherSetting": {
+    "Hefeng": "latlon",
+    "Caiyun": "latlon"
   }
 }

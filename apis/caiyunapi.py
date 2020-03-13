@@ -52,9 +52,17 @@ class Caiyunapi:
         except Exception as e:
             print(e)
             return 1
-        r.encoding = "UTF-8"
+
+        if r.status_code != 200:
+            try:
+                r = requests.get(
+                    f"https://api.caiyunapp.com/v2/TAkhjf8d1nlSlspN/{pos[0]},{pos[1]}/{request_mode}.json?lang=zh_CN&unit=metric&tzshift=28800")
+            except Exception as e:
+                print(e)
+                return 1
         if r.status_code != 200:
             return 1
+        r.encoding = "UTF-8"
         content = r.json()
         if content["status"] == "ok" and content["api_status"] == "active":
             return content
@@ -81,18 +89,30 @@ class Caiyunapi:
         qiya = r["pres"] / 100
         tigan = r["apparent_temperature"]
         local_jiangshuiliang = r["precipitation"]["local"]["intensity"]
-        nearest_distance = r["precipitation"]["nearest"]["distance"]
-        nearest_jiangshuiliang = r["precipitation"]["nearest"]["intensity"]
+        try:
+            nearest_distance = r["precipitation"]["nearest"]["distance"]
+            nearest_jiangshuiliang = r["precipitation"]["nearest"]["intensity"]
+        except Exception as e:
+            print(e)
+            nearest_distance = 0
+            nearest_jiangshuiliang = 0
         ul_level = r["ultraviolet"]["index"]
         comfort = self.comfort[r["comfort"]["index"]]
 
         aqi = r["aqi"]
         pm25 = r["pm25"]
-        pm10 = r["pm10"]
-        o3 = r["o3"]
-        so2 = r["so2"]
-        no2 = r["no2"]
-        co = r["co"]
+        try:
+            pm10 = r["pm10"]
+            o3 = r["o3"]
+            so2 = r["so2"]
+            no2 = r["no2"]
+            co = r["co"]
+        except Exception as e:
+            pm10 = "Error"
+            o3 = "Error"
+            so2 = "Error"
+            no2 = "Error"
+            co = "Error"
 
         string = f"""更新时间：{servertime}
 查询的经纬度：{location[0]},{location[1]}\n
@@ -242,16 +262,16 @@ class Caiyunapi:
             string += f"""预报天气：{info}
 日间天气状况：{data[info]["day_con"]} 夜间天气状况：{data[info]["night_con"]}
 日出时间：{data[info]["sunrise"]}，日落时间：{data[info]["sunset"]}
-最高温度：{data[info]["tmp_max"]}℃，最低温度：{data[info]["tmp_min"]}℃，平均温度：{data[info]["tmp_avg"]}℃；感觉{data[info]["comfort"]}
-最高能见度：{data[info]["vis_max"]}公里，最低能见度：{data[info]["vis_min"]}公里，平均能见度：{data[info]["vis_avg"]}公里
+最高温度：{data[info]["tmp_max"]}℃，最低温度：{data[info]["tmp_min"]}℃，平均温度：{data[info]["tmp_avg"]:0.2f}℃；感觉{data[info]["comfort"]}
+最高能见度：{data[info]["vis_max"]}公里，最低能见度：{data[info]["vis_min"]}公里，平均能见度：{data[info]["vis_avg"]:0.2f}公里
 紫外线强度指数为{data[info]["ul_index"]}级（{data[info]["ul_desc"]}）
 当日降水量：{data[info]["jiangshui_min"]:0.2f}~{data[info]["jiangshui_max"]:0.2f}(平均降水量：{data[info]["jiangshui_avg"]:0.2f})
 当日湿度：{data[info]["hum_min"]:0.2f}%~{data[info]["hum_max"]:0.2f}%(平均湿度：{data[info]["hum_avg"]})
 当日云量：{data[info]["cloud_min"]:0.2f}~{data[info]["cloud_max"]:0.2f}(平均云量：{data[info]["cloud_avg"]:0.2f})
 当日气压：{data[info]["pres_min"]:0.2f}~{data[info]["pres_max"]:0.2f}(平均气压：{data[info]["pres_avg"]:0.2f})
 最低风速：{data[info]["wind_min_spd"]}公里/小时({data[info]["wind_min_dir"]}°)，最高风速：{data[info]["wind_max_spd"]}公里/小时({data[info]["wind_max_dir"]}°)
-空气质量：{data[info]["aqi_min"]}μg/m3~{data[info]["aqi_max"]}μg/m3（平均：{data[info]["aqi_avg"]}μg/m3）
-PM2.5浓度：{data[info]["pm25_min"]}μg/m3~{data[info]["pm25_max"]}μg/m3（平均：{data[info]["pm25_avg"]:0.2f}μg/m3）\n\n"""
+空气质量：{data[info]["aqi_min"]}~{data[info]["aqi_max"]}（平均：{data[info]["aqi_avg"]:0.2f}）
+PM2.5浓度：{data[info]["pm25_min"]:0.2f}μg/m3~{data[info]["pm25_max"]:0.2f}μg/m3（平均：{data[info]["pm25_avg"]:0.2f}μg/m3）\n\n"""
         # 删除末尾多出来的两行换行符
         string = "".join(list(string)[:len(string) - 2])
         return string

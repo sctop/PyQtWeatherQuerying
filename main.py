@@ -3,20 +3,17 @@ from PyQt5.QtWidgets import *
 from PyQt5.Qt import Qt
 from PyQt5.QtGui import QIcon, QFont
 import json
-from dataprocess import Hefeng, Caiyun, is_debug
+from dataprocess import Hefeng, Caiyun, is_debug, get_time
 import time
-import random
 
 with open("config.json", encoding="UTF-8", mode="r") as file:
-    content = json.load(file)
-    DefaultCity = content["Default"]["city"]
-    DefaultAddress = content["Default"]["latlon"]
+    config = json.load(file)
+    DefaultCity = config["Default"]["city"]
+    DefaultAddress = config["Default"]["latlon"]
 
 # 针对1920*1080 16:9屏幕设计
-__size__ = (730,800)
-# WAAAAAAAAAAAAAAAAAAAAAAAAAARFRAAAAAAAAAAAAAAAAAAAME!
-with open("something.json", encoding="UTF-8", mode='r') as file:
-    introduction = json.load(file)
+__size__ = (730, 800)
+
 
 class App:
     def __init__(self):
@@ -26,11 +23,15 @@ class App:
         self.app = QApplication(sys.argv)
         self.window = QWidget()
         self.window.setGeometry(100, 100, __size__[0], __size__[1])
-        self.window.setWindowTitle("PyQt天气查询系统")
+        self.window.setWindowTitle("天气查询系统")
         self.window.setWindowIcon(QIcon("favicon.ico"))
         self.main()
-        self.hefeng = Hefeng(self.hefeng_editcity, self.debugging, self.weather_info, self.query_time, "Your key here")
-        self.caiyun = Caiyun(self.caiyun_editcity, self.debugging, self.weather_info, self.query_time, "Your key here")
+        self.hefeng = Hefeng(self.hefeng_editcity, self.debugging, self.weather_info, self.query_time,
+                             "Your KEY here")
+        #self.caiyun = Caiyun(self.caiyun_editcity, self.debugging, self.weather_info, self.query_time,
+                             #"TAkhjf8d1nlSlspN")
+        self.caiyun = Caiyun(self.caiyun_editcity, self.debugging, self.weather_info, self.query_time,
+                             "Your KEY here")
         self.run()
         self.window.show()
         self.defalt()
@@ -46,7 +47,7 @@ class App:
         self.lb_search.setFont(self.font_21)
         self.layout.addWidget(self.lb_search, 0, 0, 1, 12)
 
-        self.copyright = QLabel("Powered by Python - Developed by sctop")
+        self.copyright = QLabel("本应用的数据来自 和风天气 与 彩云天气\n此应用由Sctop基于Python并使用PyQt库进行开发")
         self.copyright.setAlignment(Qt.AlignCenter)
         self.copyright.setFont(QFont("微软雅黑", 9))
         self.layout.addWidget(self.copyright, 1, 0, 1, 12)
@@ -57,7 +58,7 @@ class App:
         # debug专用
         self.debugging = QLineEdit()
         self.debugging.setFont(self.font_13)
-        self.debugging.setPlaceholderText("DEBUGGING_PARAM")
+        self.debugging.setPlaceholderText("开发者的专属调试用代码")
         self.layout.addWidget(self.debugging, 2, 8, 1, 4)
 
         # 显示数据
@@ -77,7 +78,7 @@ class App:
         # 关于按钮
         self.btn_about = QPushButton("关于本程序")
         self.btn_about.setFont(self.font_13)
-        self.layout.addWidget(self.btn_about,8,0,1,6)
+        self.layout.addWidget(self.btn_about, 8, 0, 1, 6)
 
         # 帮助按钮
         self.btn_help = QPushButton("使用说明")
@@ -97,7 +98,7 @@ class App:
         self.btn_help.clicked.connect(self.help)
 
     def hefeng_add(self):
-        self.lb_city = QLabel("欲查询的城市名/ID/经纬度/auto_ip：")
+        self.lb_city = QLabel("(和风天气)城市名/ID/经纬度/auto_ip：")
         self.lb_city.setAlignment(Qt.AlignCenter)
         self.lb_city.setFont(self.font_13)
         self.layout.addWidget(self.lb_city, 2, 0, 1, 4)
@@ -124,15 +125,15 @@ class App:
         self.layout.addWidget(self.btn_hefeng_air_realtime, 3, 9, 1, 3)
 
     def caiyun_add(self):
-        self.lb_jingwei = QLabel("欲查询的经纬度(使用逗号隔开经度和纬度)：")
+        self.lb_jingwei = QLabel("(彩云天气)经纬度 用逗号隔开经度和纬度：")
         self.lb_jingwei.setAlignment(Qt.AlignCenter)
         self.lb_jingwei.setFont(self.font_13)
-        self.layout.addWidget(self.lb_jingwei, 4, 0, 1, 6)
+        self.layout.addWidget(self.lb_jingwei, 4, 0, 1, 5)
 
         self.caiyun_editcity = QLineEdit()
         self.caiyun_editcity.setFont(self.font_13)
         self.caiyun_editcity.setPlaceholderText("在这里键入...")
-        self.layout.addWidget(self.caiyun_editcity, 4, 6, 1, 6)
+        self.layout.addWidget(self.caiyun_editcity, 4, 5, 1, 7)
 
         self.btn_caiyun_realtime = QPushButton("当前实况天气")
         self.btn_caiyun_realtime.setFont(self.font_13)
@@ -151,15 +152,15 @@ class App:
         self.layout.addWidget(self.btn_caiyun_daily, 5, 9, 1, 3)
 
     def defalt(self):
-        self.hefeng_editcity.setText(DefaultCity)
-        self.caiyun_editcity.setText(DefaultAddress)
-        self.weather_info.setText("""嗨！这里是开发者，非常开心你能够使用本程序！""")
+        self.hefeng_editcity.setText(config["Default"][config["WeatherSetting"]["Hefeng"]])
+        self.caiyun_editcity.setText(config["Default"][config["WeatherSetting"]["Caiyun"]])
+        self.help()
 
     def about(self):
         if is_debug(self.debugging.text()) != 1:
-            keys = [self.hefeng.weather.key,self.caiyun.weather.token]
+            keys = [self.hefeng.weather.key, self.caiyun.weather.token]
         else:
-            keys=["[key]","[key]"]
+            keys = ["[key]", "[key]"]
         self.weather_info.setText(f"""本程序使用了PyQt、requests等库对程序的主体部分进行开发
 本程序使用了 和风天气(www.heweather.com) 与 彩云天气(caiyunapp.com) 的API进行数据的提供\n
 和风天气API地址：\n1. 天气查询：https://free-api.heweather.net/s6/weather/[request_mode]?location=[name]&key={keys[0]}
@@ -167,16 +168,9 @@ class App:
 彩云天气API地址：\n1. 实况天气：https://api.caiyunapp.com/v2/{keys[1]}/[pos]/realtime.json?lang=zh_CN&unit=metric&tzshift=28800
 2. 预报天气：https://api.caiyunapp.com/v2/[token]/[pos]/forecast.json?lang=zh_CN&unit=metric&tzshift=28800
 (注：彩云天气的API使用的是公共API key，不保障7×24小时全天候的服务可用性)\n
-关注开发者的最新动态：
-QQ：2094880085
-GitHub：https://github.com/sctop 
-Bilibili：https://space.bilibili.com/93650528
-Warframe中文维基：https://warframe.huijiwiki.com/wiki/用户:Sctop
-邮箱：2094880085@qq.com / sctopzhang@gmail.com / sctopzhang@outlook.com\n
-Powered by Python - Designed and developed by Sctop
-本项目开源地址：https://github.com/PythonQtWeatherQuerying\n\n
------------------------一些小秘密-----------------------\n"""+random.choice(introduction))
-        self.query_time.setText("信息查询时间戳："+time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+联系开发者：2094880085@qq.com / sctopzhang@gmail.com / sctopzhang@outlook.com\n
+Powered by Python - Designed and developed by Sctop""")
+        self.query_time.setText("信息查询时间戳：" + get_time())
 
     def help(self):
         self.weather_info.setText("""本程序最上面的输入框使用和风天气API，其用于输入查询的地址。该地址可以是以下格式中的其中任意一种：
@@ -185,16 +179,20 @@ Powered by Python - Designed and developed by Sctop
 3. 城市名称，支持中英文和汉语拼音
 4. 城市名称，上级城市 或 省 或 国家，英文,分隔，此方式可以在重名的情况下只获取想要的地区的天气数据，例如 西安,陕西
 5. IP地址(xxx.xxx.xxx.xxx)
-6. 根据请求自动判断，根据用户的请求获取IP，通过 IP 定位并获取城市数据\n
+6. 根据请求自动判断，根据用户的请求获取IP，通过 IP 定位并获取城市数据
+（注意：当输入为经纬度或县区名称时，由于部分原因，获取空气质量可能将自动请求两次尝试获得所查询地址所在城市的市级空气质量。因此显示的查询地点可能与你自己所期望的不太一样）\n
 该地址输出框的右侧为开发者Debug专用，需要输入对应的Debug字段才能进入开发者的专用模式。
-该模式将显示请求的原内容，信息量较大，建议使用Chrome + Devtools -> Network -> Preview来查看JSON关系图。
-Debug字段已公布在程序中可供预览的部分中，不需要查看源代码即可获取到专属字段。\n
+该模式将显示请求的原内容，信息量较大，建议使用Chrome + Devtools -> Network -> Preview来请求并查看JSON关系图。或者亦可使用 http://www.jsons.cn/jsoncheck/ 来可视化JSON结构。\n
 第三个输入框使用彩云天气API，其用于输入查询的经纬度。
-经纬度格式见以上内容。\n
+经纬度格式见以上内容。
+（注意：彩云API转为付费API，10000次/5元，珍惜使用！）
+------------------------------------------------------------
+欲查询经纬度，请在百度地图坐标拾取系统中查找地点选取经纬度坐标。
+网址：http://api.map.baidu.com/lbsapi/getpoint/index.html
 ------------------------------------------------------------
 由于未知原因，目前该程序的配置文件“config.json”不能通过记事本进行编辑，否则会导致程序无法运行。
 若需要，请使用诸如Notepad++(https://notepad-plus-plus.org/downloads/)的工具进行修改！""")
-        self.query_time.setText("信息查询时间戳：" + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+        self.query_time.setText("信息查询时间戳：" + get_time())
 
 
 main = App()

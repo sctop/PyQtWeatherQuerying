@@ -61,10 +61,10 @@ class Hefengapi(object):
 
         string = f"""更新时间：{update_time}
 您所查询的地点位于{location}\n
-实时温度：{wendu}℃，体感温度为{feeling}℃；当前湿度为{shidu}%
-天气状况：{zhuangkuang}，能见度：{nengjiandu}公里，云量：{yunliang}
-风速：{fengsu}公里/小时(风力{fengli}级)，风向为{fengxiang}
-当前降水量：{jiangshui}，气压：{qiya}"""
+实时温度：{wendu}℃，体感温度为{feeling}℃；当前湿度为{shidu}%；
+天气状况：{zhuangkuang}，能见度：{nengjiandu}公里，云量：{yunliang}；
+风速：{fengsu}公里/小时(风力{fengli}级)，风向为{fengxiang}；
+当前降水量：{jiangshui}，气压：{qiya}毫安。"""
         return string
 
     def forecast(self, name):
@@ -95,12 +95,12 @@ class Hefengapi(object):
             fengli = daily["wind_sc"]  # 风力
 
             string += f"""预报日期：{date}
-日间天气状况：{day_zhuangkuang}  夜间天气状况：{night_zhuangkuang}
-日出时间：{sunrise}，日落时间：{sunshut}；月升时间：{moonrise}，月落时间：{moonshut}
-最高温度：{tmp_max}℃，最低温度：{tmp_min}℃，湿度：{shidu}%
-能见度：{nengjiandu}公里，紫外线强度指数为{uv}级
-风速：{fengsu}公里/小时(风力{fengli}级)，风向：{fengxiang}
-当前降水量：{jiangshui}(降水概率：{jiangshuigailv}%)，气压：{qiya}\n\n"""
+日间天气状况：{day_zhuangkuang}  夜间天气状况：{night_zhuangkuang}；
+日出时间：{sunrise}，日落时间：{sunshut}；月升时间：{moonrise}，月落时间：{moonshut}；
+最高温度：{tmp_max}℃，最低温度：{tmp_min}℃，湿度：{shidu}%；
+能见度：{nengjiandu}公里，紫外线强度指数为{uv}级；
+风速：{fengsu}公里/小时(风力{fengli}级)，风向：{fengxiang}；
+当前降水量：{jiangshui}(降水概率：{jiangshuigailv}%)，气压：{qiya}毫安。\n\n"""
 
         # 删除末尾多出来的两行换行符
         string = "".join(list(string)[:len(string) - 2])
@@ -127,10 +127,10 @@ class Hefengapi(object):
             fengli = hourly["wind_sc"]  # 风力
 
             string += f"""预报时间：{time}
-预报天气状况：{zhuangkuang}，云量：{yunliang}
-预测温度：{tmp}℃，露点温度：{ludian}℃，湿度：{shidu}%
-风速：{fengsu}公里/小时(风力{fengli}级)，风向：{fengxiang}
-降水概率：{jiangshuigailv}%，气压：{qiya}\n\n"""
+预报天气状况：{zhuangkuang}，云量：{yunliang}；
+预测温度：{tmp}℃，露点温度：{ludian}℃，湿度：{shidu}%；
+风速：{fengsu}公里/小时(风力{fengli}级)，风向：{fengxiang}；
+降水概率：{jiangshuigailv}%，气压：{qiya}毫安。\n\n"""
 
         # 删除末尾多出来的两行换行符
         string = "".join(list(string)[:len(string) - 2])
@@ -139,7 +139,14 @@ class Hefengapi(object):
     def air_now(self, name):
         res = self.get_weather(4, name)
         if res == 1:
-            return self.error_meg
+            try:
+                res = requests.get(f"https://free-api.heweather.net/s6/weather/now?location={name}&key={self.key}",
+                                   headers=self.headers, timeout=5).json()["HeWeather6"][0]
+                res = self.get_weather(4, res["basic"]["parent_city"])
+                if res == 1:
+                    return self.error_meg
+            except Exception:
+                return self.error_meg
         update_time = res["update"]["loc"]
         location = f'{res["basic"]["cnty"]} {res["basic"]["admin_area"]} {res["basic"]["parent_city"]} {res["basic"]["location"]}'
         string = f"""更新时间：{update_time}\n您所查询的地点位于{location}\n\n"""
@@ -166,7 +173,7 @@ class Hefengapi(object):
         string += f"""当前城市概况（发布时间{city_now['time']}）：
 空气质量指数：{city_now['aqi']}({city_now['desc']})，{city_now['main']}
 PM2.5浓度为{city_now['pm25']}μg/m3，PM10浓度为{city_now['pm10']}μg/m3
-no2浓度为{city_now['no2']}μg/m3，so2浓度为{city_now['so2']}μg/m3，co浓度为{city_now['co']}μg/m3，o3浓度为{city_now['o3']}μg/m3\n\n"""
+NO2浓度为{city_now['no2']}μg/m3，so2浓度为{city_now['so2']}μg/m3，co浓度为{city_now['co']}μg/m3，o3浓度为{city_now['o3']}μg/m3\n\n"""
 
         for info in station:
             string += f"""站点“{info}”信息（发布时间{station[info]['time']}）：

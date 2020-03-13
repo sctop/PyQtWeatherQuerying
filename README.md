@@ -29,23 +29,7 @@ Tips：PyQt5由于国内网络原因下载速度极慢，建议使用Proxifier+�
 
 通过输入开发者调试代码，可允许开发者直接在应用内直接检测api的返回结果，以确定bug究竟是由什么引起的。
 
-开发者调试代码的一些提示放置在“something.json”文件中，使用
-
-```python
-with open("something.json", encoding="UTF-8", mode='r') as file:
-    introduction = json.load(file)
-```
-
-来从文件中读取数据到**introduction**变量中，使用
-
-```python
-import random
-random.choice(introduction)
-```
-
-来随机选择一条提示语句。
-
-<small><del>开发者由于非常喜爱[WARFRAME](https://warframe.com)，因此将WF的一些东西放进了这个文件里</del></small>
+在源码中，您可以看到在`dev`文件夹下有`decoding_password.py`与`encoding_password.py`，两个Python文件的作用分别为解码和加密此代码，因调试内容包含您的API秘钥，所以该程序仅是设计为在个人且信赖的环境下使用的。当然，您也可以二次编程以取消相关功能。
 
 ## API key
 
@@ -66,9 +50,14 @@ class App:
 
 请注意，彩云天气有一个公用API：`TAkhjf8d1nlSlspN`。该API可提供基本数据的供给，但不保证数据7×24实时可用。
 
+如果您自己提供的API失效了，程序将自动切换至上述的公用API使用；如果两者皆不可用，则程序将返回错误。
+
 ## 版本记录
 
 ```
+V2.0 2020-03-13
+改了许多内容
+
 V1.1 2019-12-21
 提交到GitHub上
 ```
